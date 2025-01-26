@@ -3,14 +3,18 @@ const Product = require("../models/product");
 const getAllProducts = async (req, res) => {
     const search = 'a';
 
-    const porducts = await Product.find({
+    const porducts = await Product
+    .find({
         name: {$regex: search, $options: 'i'}
-    }).sort('name price');
+    })
+    .sort('name price')
+    .select('name price -_id')
+    .limit(4); 
     res.status(200).json({porducts, nbHits:porducts.length});
 };
 
 const getAllProductsUsingQuery = async (req, res) => {
-    const { featured, company, name, sort } = req.query;
+    const { featured, company, name, sort, fields } = req.query;
     const queryObject = {};
     
     if (featured) {
@@ -27,12 +31,20 @@ const getAllProductsUsingQuery = async (req, res) => {
 
     let result = Product.find(queryObject);
 
+    //Sorting
     if (sort) {
         const sortList = sort.split(',').join(' ');
         result = result.sort(sortList);
     }else{
         result = result.sort('createdAt');
     }
+
+    // Select
+    if (fields) {
+        const fieldList = fields.split(',').join(' ');
+        result = result.select(fieldList);
+    }
+
     const porducts = await result;
     res.status(200).json({porducts, nbHits:porducts.length});
 };
